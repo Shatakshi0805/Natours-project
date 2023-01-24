@@ -50,8 +50,17 @@ const tourSchema = new mongoose.Schema({
         select: false
     },
     startDates: [Date]
-});
+    }, 
+    {
+    toJSON: { virtuals: true},//to convert virtual property "durationWeeks" to JSON
+    toObject: { virtuals: true}// to convert virtual property "durationWeeks" in object form like others above
+    }
+);
 
+//mongoose virtual property => doesnt get saved in DB
+tourSchema.virtual("durationWeeks").get(function () {
+    return this.duration / 7;//duration week for duration of every tour
+})
 const Tour = mongoose.model('Tour', tourSchema);
 
 module.exports = Tour;
