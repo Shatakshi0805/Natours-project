@@ -1,11 +1,14 @@
 const mongoose = require("mongoose");
 
+const slugify = require("slugify");
+
 const tourSchema = new mongoose.Schema({
     name: {
         type: String,
         required: [true, "Tour must have a name"],
         unique: true
     },
+    slug: String,
     duration: {
         type: Number,
         required: [true, "A Tour must have a duration"]
@@ -61,6 +64,25 @@ const tourSchema = new mongoose.Schema({
 tourSchema.virtual("durationWeeks").get(function () {
     return this.duration / 7;//duration week for duration of every tour
 })
+
+//DOCUMENT MIDDLEWARE: RUNS BEFORE .save() AND .create() BUT NOT ON .insertMany()
+tourSchema.pre("save", function (next) {
+    // console.log(this);
+    this.slug = slugify(this.name, { lower: true});//lowercase form
+    next();
+})
+
+//ALSO CALLED PRE SAVE HOOK / MIDDLEWARE
+// tourSchema.pre("save", function (next) {
+//     console.log("will save document...");
+//     next();
+// })
+
+// //POST SAVE HOOK OR POST SAVE MIDDLEWARE
+// tourSchema.post("save", function (doc, next) {
+//     console.log(doc);
+//     next();
+// })
 const Tour = mongoose.model('Tour', tourSchema);
 
 module.exports = Tour;
