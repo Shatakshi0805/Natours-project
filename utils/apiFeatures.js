@@ -41,8 +41,8 @@ class APIFeatures {
   
     limitFields() {
       //3. LIMITING FIELDS=> SHOWING USER SPECIFIC SELECTED DATA
-      if (this.queryString.fields) {
-        const fields = this.queryString.fields.split(',').join(' '); //same as sort method requirements
+      if (this.queryString.fields) {//same as sort method requirements
+        const fields = this.queryString.fields.split(',').join(' '); //space got removed by mistake to check problem using ndb debugger
         this.query = this.query.select(fields);
       } else {
         //below can be used in schema as well by setting select: false to not show that property
