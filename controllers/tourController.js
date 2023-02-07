@@ -27,6 +27,7 @@
 const Tour = require("./../models/tourModel");
 const APIFeatures = require("./../utils/apiFeatures");
 const catchAsync = require("./../utils/catchAsync");
+const AppError = require("./../utils/appError");
 
 exports.aliasTours = (req, res, next) => {
   req.query.limit = "8";
@@ -36,8 +37,7 @@ exports.aliasTours = (req, res, next) => {
 }
 
 //GET ALL TOURS
-exports.getAllTours = async (req, res) => {
-  try {
+exports.getAllTours = catchAsync(async (req, res) => {
     const features = new APIFeatures(Tour.find(), req.query)
     .filter()
     .sort()
@@ -54,13 +54,7 @@ exports.getAllTours = async (req, res) => {
         tours
       }
     });
-  } catch (err) {
-    res.status(400).json({
-      status: "fail",
-      message: "couldnt find any tour"
-    })
-  }
-}
+})
 
 
 
@@ -81,6 +75,10 @@ exports.getTour = catchAsync(async (req, res, next) => {
     const tour = await Tour.findById(req.params.id);
     //OR Tour.findOne({ _id: req.params.id })
 
+    if (!tour) {//if id is somewhat valid but some number or value is changed a bit like "63c927dd76f26535ec507a76" is valid but if last 6 is chnaged to 0 it will show tour: null so to avoid that error we show below error
+      return next(new AppError("No tour find with that ID", 404));
+    }
+
     res.status(200).json({
       status: 'success',
       data: {
@@ -96,6 +94,10 @@ exports.updateTour = catchAsync(async (req, res, next) => {
       runValidators: true//runs validator every time on update
     });
 
+    if (!tour) {//if id is somewhat valid but some number or value is changed a bit like "63c927dd76f26535ec507a76" is valid but if last 6 is chnaged to 0 it will show tour: null so to avoid that error we show below error
+      return next(new AppError("No tour find with that ID", 404));
+    }
+
     res.status(200).json({
       status: 'success',
       data: {
@@ -106,6 +108,11 @@ exports.updateTour = catchAsync(async (req, res, next) => {
 
 exports.deleteTour = catchAsync(async (req, res, next) => {
     const tour = await Tour.findByIdAndDelete(req.params.id);
+
+    if (!tour) {//if id is somewhat valid but some number or value is changed a bit like "63c927dd76f26535ec507a76" is valid but if last 6 is chnaged to 0 it will show tour: null so to avoid that error we show below error
+      return next(new AppError("No tour find with that ID", 404));
+    }
+    
     res.status(204).json({
       status: 'success',
       data: null
