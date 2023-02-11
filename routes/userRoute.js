@@ -5,6 +5,7 @@ const authController = require("./../controllers/authController");
 const router = express.Router();//similar to app except mini app for specific route of user
 
 router.post("/signup", authController.signup);
+router.post("/login", authController.login);
 
 router.route("/").get(userController.getAllUsers).post(userController.createUser);
 router.route("/:id").get(userController.getUser).patch(userController.updateUser).delete(userController.deleteUser);
