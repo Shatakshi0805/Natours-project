@@ -1,3 +1,4 @@
+const { promisify } = require("util");
 const jwt = require("jsonwebtoken");
 const User = require("./../models/userModel");
 const catchAsync = require("./../utils/catchAsync");
@@ -15,7 +16,8 @@ exports.signup = catchAsync(async (req, res, next) => {
         name: req.body.name,
         email: req.body.email,
         password: req.body.password,
-        passwordConfirm: req.body.passwordConfirm
+        passwordConfirm: req.body.passwordConfirm,
+        passwordChangedAt: req.body.passwordChangedAt
     });
 // first arg is PAYLOAD=> DATA OF USER TO BE PAASED, SECRET KEY, 
     const token = signToken(newUser._id);
@@ -53,4 +55,38 @@ exports.login = catchAsync(async (req, res, next) => {
         status: "success",
         token
     })
+})
+
+exports.protect = catchAsync(async (req, res, next) => {
+    let token;
+    //1. get token and check if it exists
+    //Access to routes will be given if user has token, check if user has token in req.headers
+    //If Token is there check if that token header starts with "Bearer", only then proceed to further oprn
+    if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+        token = req.headers.authorization.split(' ')[1];//user has auth token, split the header by space, which will create each word into array element and second eleof array [1] is our token as first is "Bearer"
+    }
+    
+    //if no token was found, do not allow user to enter/access the route
+    if (!token) {
+        return next(new AppError("You are not logged in! Please login to access", 401));
+    }
+    //Having token is fine, but check if the token is even valid or not in order to allow further access
+    //2. verify token
+    const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);//Gives me payload that is user id, createdAt, expiresIn time
+    
+    //check if user that is trying to enter in the application even exists in the DB, that is it has account created(@ signup) and exists
+    //3. check if user still exists
+    const freshUser = await User.findById(decoded.id);
+
+    if (!freshUser) {
+        return next(new AppError("The user with this token does not exists!", 401));
+    }
+    //4. check if user changed pwd after token was issued
+    if (freshUser.passwordChangedAfter(decoded.iat)) {//iat = issued at
+        return next(new AppError("User recently changed password. Please log in again.", 401));
+    }
+
+    req.user = freshUser;
+    
+    next();
 })
